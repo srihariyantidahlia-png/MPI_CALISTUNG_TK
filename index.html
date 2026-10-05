@@ -1,0 +1,877 @@
+AQ.Ab8RN6I9yXcYK06n5x8EJpuBPQunFmp4gzs4jndKg4PqVjVcnA<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Calistung PAUD</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            touch-action: manipulation; /* Prevent double-tap zoom on mobile */
+            overflow-x: hidden;
+        }
+        .kid-shadow {
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
+        }
+        .kid-shadow:active {
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0.15);
+            transform: translateY(8px);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-pop { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        
+        /* Layout utility for slots */
+        .slot-active { border-color: #fcd34d !important; background-color: rgba(255, 255, 255, 0.4); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-cyan-300 via-blue-400 to-purple-400 min-h-screen text-white flex flex-col">
+
+    <!-- Toast Notification (No Alert) -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full font-bold shadow-xl z-50 transition-opacity duration-300 opacity-0 pointer-events-none hidden">
+        Pesan Error
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main id="app-container" class="flex-1 flex flex-col w-full max-w-5xl mx-auto p-4 md:p-8">
+        
+        <!-- ============================================== -->
+        <!-- SCREEN 1: LOGIN & PLAYER SETUP                 -->
+        <!-- ============================================== -->
+        <section id="screen-login" class="flex-1 flex flex-col items-center justify-center animate-pop">
+            <h1 class="text-4xl md:text-6xl font-black text-center text-yellow-300 drop-shadow-md mb-2 leading-tight">
+                selamat datang di game calistung
+            </h1>
+            <p class="text-xl md:text-2xl font-bold text-white mb-8 drop-shadow">Tema Buah & Sayur 🍎🥦</p>
+
+            <div class="bg-white/20 backdrop-blur-md p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md border-4 border-white/40">
+                <div class="mb-4">
+                    <label class="block text-xl font-bold mb-2">Nama Pemain:</label>
+                    <input type="text" id="input-nama" placeholder="Contoh: Budi" class="w-full text-2xl p-4 rounded-2xl text-gray-800 font-bold border-4 border-transparent focus:border-yellow-400 outline-none kid-shadow bg-white">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xl font-bold mb-2">Kelas (Opsional):</label>
+                    <input type="text" id="input-kelas" placeholder="Contoh: PAUD A" class="w-full text-2xl p-4 rounded-2xl text-gray-800 font-bold border-4 border-transparent focus:border-yellow-400 outline-none kid-shadow bg-white">
+                </div>
+                <button id="btn-add-player" class="w-full bg-green-400 hover:bg-green-500 text-green-900 font-black text-2xl py-4 rounded-2xl kid-shadow transition-all mb-6">
+                    + Tambah Pemain
+                </button>
+
+                <div id="player-list-container" class="bg-black/20 rounded-2xl p-4 mb-6 min-h-[80px] hidden">
+                    <h3 class="font-bold text-lg mb-2">Daftar Pemain:</h3>
+                    <ul id="player-list" class="space-y-2"></ul>
+                </div>
+
+                <button id="btn-start-game" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black text-3xl py-4 rounded-2xl kid-shadow transition-all hidden">
+                    MULAI BERMAIN! 🚀
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- SCREEN 2: LEVEL & MODE SELECTION               -->
+        <!-- ============================================== -->
+        <section id="screen-menu" class="flex-1 flex flex-col items-center justify-center hidden animate-pop relative">
+            <button onclick="playSound('click'); switchScreen('screen-login');" class="absolute top-0 md:top-4 left-0 md:left-4 bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-xl kid-shadow flex items-center gap-2 z-10">
+                ⬅️ Kembali
+            </button>
+            <h2 class="text-4xl md:text-5xl font-black text-center text-white drop-shadow-md mb-8 mt-12 md:mt-0">
+                Halo, <span id="current-turn-name" class="text-yellow-300">Pemain</span>!<br>Pilih Mainanmu:
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                <!-- Mode Membaca -->
+                <div class="bg-white/20 backdrop-blur-md p-6 rounded-3xl shadow-xl border-4 border-white/40 flex flex-col items-center">
+                    <div class="text-7xl mb-4 animate-float">📖</div>
+                    <h3 class="text-3xl font-black mb-6 text-center">Membaca & Menulis</h3>
+                    <div class="flex gap-4 w-full">
+                        <button class="flex-1 bg-green-400 text-green-900 font-black text-xl py-4 rounded-2xl kid-shadow transition-all" onclick="startGame('literacy', 'easy')">Level Mudah</button>
+                        <button class="flex-1 bg-red-400 text-red-900 font-black text-xl py-4 rounded-2xl kid-shadow transition-all" onclick="startGame('literacy', 'hard')">Level Sulit</button>
+                    </div>
+                </div>
+
+                <!-- Mode Berhitung -->
+                <div class="bg-white/20 backdrop-blur-md p-6 rounded-3xl shadow-xl border-4 border-white/40 flex flex-col items-center">
+                    <div class="text-7xl mb-4 animate-float">🔢</div>
+                    <h3 class="text-3xl font-black mb-6 text-center">Berhitung</h3>
+                    <div class="flex gap-4 w-full">
+                        <button class="flex-1 bg-green-400 text-green-900 font-black text-xl py-4 rounded-2xl kid-shadow transition-all" onclick="startGame('numeracy', 'easy')">Level Mudah</button>
+                        <button class="flex-1 bg-red-400 text-red-900 font-black text-xl py-4 rounded-2xl kid-shadow transition-all" onclick="startGame('numeracy', 'hard')">Level Sulit</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="mt-8 bg-blue-500 text-white font-bold px-8 py-3 rounded-full kid-shadow" onclick="showScoreboard()">Lihat Papan Skor 🏆</button>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- SCREEN 3: GAMEPLAY ARENA                       -->
+        <!-- ============================================== -->
+        <section id="screen-game" class="flex-1 flex flex-col hidden relative">
+            <!-- Header -->
+            <div class="flex justify-between items-center bg-black/20 p-4 rounded-2xl backdrop-blur-sm mb-4 shrink-0">
+                <button onclick="playSound('click'); goToMenu();" class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-xl kid-shadow flex items-center gap-2">⬅️ Kembali</button>
+                <div class="text-center">
+                    <div class="text-xl font-bold text-yellow-300">Pemain: <span id="game-player-name">Budi</span></div>
+                    <div class="text-sm">Skor: <span id="game-player-score" class="font-black text-2xl">0</span></div>
+                </div>
+                <div id="game-level-indicator" class="bg-green-500 text-white font-bold px-4 py-2 rounded-xl">Mudah</div>
+            </div>
+
+            <!-- AI Feedback Bubble -->
+            <div id="ai-feedback-container" class="absolute top-24 left-1/2 transform -translate-x-1/2 z-40 hidden w-full max-w-lg px-4 transition-all">
+                <div class="bg-white text-blue-900 p-4 rounded-3xl shadow-2xl border-4 border-blue-300 flex items-center gap-4 animate-pop">
+                    <div class="text-4xl" id="ai-robot-emoji">🤖</div>
+                    <div id="ai-feedback-text" class="text-lg font-bold leading-tight flex-1">Bagus sekali! Kamu pintar!</div>
+                </div>
+            </div>
+
+            <!-- Central Game Area (Crucial Layout Requirement) -->
+            <div class="flex-1 flex flex-col items-center justify-center relative w-full pb-8">
+                
+                <!-- Display Image / Emojis -->
+                <div id="game-visuals" class="flex flex-wrap justify-center items-center gap-2 mb-8 min-h-[120px] animate-pop text-8xl md:text-[10rem]">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Answer Area (Slots for Literacy / Question for Numeracy) -->
+                <div id="game-answer-area" class="flex flex-wrap justify-center gap-3 mb-12 min-h-[80px]">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Interactive Choices (Letter Bank / Number Buttons) -->
+                <!-- CRITICAL: Flex layout keeps this centered/slightly higher, NOT at the bottom edge -->
+                <div id="game-choices-area" class="flex flex-wrap justify-center items-center gap-4 w-full max-w-3xl px-4">
+                    <!-- Injected by JS -->
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- SCREEN 4: SCOREBOARD                           -->
+        <!-- ============================================== -->
+        <section id="screen-scoreboard" class="flex-1 flex flex-col items-center justify-center hidden animate-pop relative">
+            <button onclick="playSound('click'); goToMenu();" class="absolute top-0 md:top-4 left-0 md:left-4 bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-xl kid-shadow flex items-center gap-2 z-10">
+                ⬅️ Kembali
+            </button>
+            <h2 class="text-5xl font-black text-center text-yellow-300 drop-shadow-md mb-8 mt-16 md:mt-0">🏆 Papan Skor Pemenang 🏆</h2>
+            
+            <div class="bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-full max-w-2xl border-8 border-yellow-400">
+                <ul id="scoreboard-list" class="space-y-4 text-gray-800 text-2xl font-bold">
+                    <!-- Injected by JS -->
+                </ul>
+            </div>
+
+            <button onclick="goToMenu()" class="mt-8 bg-blue-500 hover:bg-blue-600 text-white font-black text-2xl px-12 py-4 rounded-full kid-shadow transition-all">
+                Main Lagi!
+            </button>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- OVERLAY: MENIRU MENULIS (TRACING)              -->
+        <!-- ============================================== -->
+        <div id="overlay-tracing" class="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center backdrop-blur-sm hidden">
+            <div class="bg-white/95 w-11/12 max-w-2xl p-6 md:p-8 rounded-3xl flex flex-col items-center relative animate-pop shadow-2xl border-8 border-blue-400">
+                <h2 id="tracing-title" class="text-3xl md:text-4xl text-blue-600 font-black mb-6 text-center drop-shadow-sm">Ayo, tiru tulisan ini! ✍️</h2>
+
+                <div class="flex w-full flex-col md:flex-row gap-6 items-center">
+                    <!-- Area Kanvas -->
+                    <div class="flex-1 flex justify-center items-center bg-white rounded-3xl p-4 border-4 border-dashed border-gray-300 w-full h-64 md:h-72 relative overflow-hidden">
+                        <!-- Huruf/Angka Bayangan -->
+                        <span id="tracing-target" class="text-[180px] font-black text-gray-200 absolute select-none pointer-events-none z-0 mt-4">A</span>
+                        <!-- Kanvas untuk coretan -->
+                        <canvas id="tracing-canvas" class="w-full h-full absolute inset-0 z-10 touch-none cursor-crosshair"></canvas>
+                    </div>
+
+                    <!-- Tombol Aksi Kanvas -->
+                    <div class="flex flex-row md:flex-col gap-4">
+                        <button onclick="clearTracing()" class="bg-red-400 hover:bg-red-500 text-white font-black text-xl py-4 px-6 rounded-2xl kid-shadow border-4 border-red-500 flex-1">
+                            🗑️ Hapus
+                        </button>
+                        <button onclick="nextTracing()" class="bg-green-400 hover:bg-green-500 text-green-900 font-black text-xl py-4 px-6 rounded-2xl kid-shadow border-4 border-green-500 flex-1">
+                            ➡️ Lanjut
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Firebase Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase config placeholder (provided by environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'calistung-paud-game';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        let app, db, auth, userId;
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Auth Strategy
+            if (typeof __initial_auth_token !== 'undefined') {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            userId = auth.currentUser?.uid;
+            console.log("Firebase initialized. User ID:", userId);
+        } catch (e) {
+            console.warn("Firebase initialization failed (Running in local/offline mode).", e);
+        }
+
+        // Export to window for global access by game logic
+        window.saveScoreToCloud = async (player) => {
+            if (!auth || !auth.currentUser) return;
+            try {
+                // Strict Path Rule 1
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'scores', `${userId}_${player.id}`);
+                await setDoc(docRef, {
+                    name: player.name,
+                    kelas: player.kelas,
+                    score: player.score,
+                    timestamp: new Date().getTime()
+                });
+            } catch (error) {
+                console.error("Error saving score:", error);
+            }
+        };
+    </script>
+
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        // --- State Management ---
+        const state = {
+            players: [], // { id, name, kelas, score }
+            currentPlayerIndex: 0,
+            mode: 'literacy', // 'literacy' | 'numeracy'
+            difficulty: 'easy', // 'easy' | 'hard'
+            currentAnswer: [], // for literacy
+            targetWord: '',
+            targetNumber: 0,
+            audioInitialized: false
+        };
+
+        // --- Dictionaries ---
+        const DBNumeracy = {
+            easy: [1, 2, 3, 4, 5],
+            hard: [6, 7, 8, 9, 10]
+        };
+        const DBItems = [
+            { name: "APEL", emoji: "🍎" },
+            { name: "PIR", emoji: "🍐" },
+            { name: "TOMAT", emoji: "🍅" },
+            { name: "KIWI", emoji: "🥝" },
+            { name: "JERUK", emoji: "🍊" },
+            { name: "PISANG", emoji: "🍌" },
+            { name: "MANGGA", emoji: "🥭" },
+            { name: "WORTEL", emoji: "🥕" },
+            { name: "BERRY", emoji: "🍓" },
+            { name: "WALUH", emoji: "🎃" },
+            { name: "KUBIS", emoji: "🥬" }
+        ];
+
+        // --- Audio System (Tone.js) ---
+        let synth, polySynth, errorSynth;
+        
+        async function initAudio() {
+            if (state.audioInitialized) return;
+            try {
+                await Tone.start();
+                synth = new Tone.Synth().toDestination();
+                polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                errorSynth = new Tone.MembraneSynth().toDestination();
+                state.audioInitialized = true;
+                console.log("Audio ready");
+            } catch (e) {
+                console.log("Tone.js could not start", e);
+            }
+        }
+
+        function playSound(type) {
+            if (!state.audioInitialized) return;
+            const now = Tone.now();
+            switch (type) {
+                case 'click':
+                    synth.triggerAttackRelease("C5", "32n", now);
+                    break;
+                case 'correct':
+                    polySynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now);
+                    break;
+                case 'wrong':
+                    errorSynth.triggerAttackRelease("C2", "8n", now);
+                    break;
+                case 'win':
+                    polySynth.triggerAttackRelease(["C4", "E4", "G4", "C5", "E5"], "2n", now);
+                    break;
+            }
+        }
+
+        // --- UI Utilities ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('hidden', 'opacity-0');
+            toast.classList.add('opacity-100');
+            playSound('error'); // reuse wrong sound for alerts
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function switchScreen(screenId) {
+            ['screen-login', 'screen-menu', 'screen-game', 'screen-scoreboard'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // --- Player Management ---
+        document.getElementById('btn-add-player').addEventListener('click', () => {
+            initAudio(); // Initialize audio on first user interaction
+            playSound('click');
+
+            const nameInput = document.getElementById('input-nama');
+            const kelasInput = document.getElementById('input-kelas');
+            const name = nameInput.value.trim();
+            const kelas = kelasInput.value.trim();
+
+            if (!name) {
+                showToast("Nama pemain harus diisi ya! 😊");
+                return;
+            }
+
+            const newPlayer = {
+                id: Date.now().toString(),
+                name: name,
+                kelas: kelas || "PAUD",
+                score: 0
+            };
+
+            state.players.push(newPlayer);
+            nameInput.value = '';
+            kelasInput.value = '';
+
+            updatePlayerList();
+        });
+
+        function updatePlayerList() {
+            const container = document.getElementById('player-list-container');
+            const list = document.getElementById('player-list');
+            const startBtn = document.getElementById('btn-start-game');
+
+            if (state.players.length > 0) {
+                container.classList.remove('hidden');
+                startBtn.classList.remove('hidden');
+                list.innerHTML = state.players.map((p, idx) => 
+                    `<li class="bg-white/30 px-4 py-2 rounded-xl text-lg font-bold flex justify-between items-center text-white shadow-sm">
+                        <span>👦👧 ${p.name} (${p.kelas})</span>
+                        <button onclick="removePlayer(${idx})" class="text-red-300 hover:text-red-500 text-xl font-black px-2">X</button>
+                    </li>`
+                ).join('');
+            } else {
+                container.classList.add('hidden');
+                startBtn.classList.add('hidden');
+            }
+        }
+
+        window.removePlayer = (idx) => {
+            playSound('click');
+            state.players.splice(idx, 1);
+            updatePlayerList();
+        };
+
+        document.getElementById('btn-start-game').addEventListener('click', () => {
+            playSound('win');
+            state.currentPlayerIndex = 0;
+            goToMenu();
+        });
+
+        function goToMenu() {
+            const player = state.players[state.currentPlayerIndex];
+            document.getElementById('current-turn-name').innerText = player.name;
+            switchScreen('screen-menu');
+        }
+
+        // --- Game Setup ---
+        window.startGame = (mode, difficulty) => {
+            playSound('click');
+            state.mode = mode;
+            state.difficulty = difficulty;
+            
+            const player = state.players[state.currentPlayerIndex];
+            document.getElementById('game-player-name').innerText = player.name;
+            document.getElementById('game-player-score').innerText = player.score;
+            document.getElementById('game-level-indicator').innerText = difficulty === 'easy' ? 'Level Mudah' : 'Level Sulit';
+            document.getElementById('game-level-indicator').className = difficulty === 'easy' ? 'bg-green-500 text-white font-bold px-4 py-2 rounded-xl' : 'bg-red-500 text-white font-bold px-4 py-2 rounded-xl';
+            
+            switchScreen('screen-game');
+            generateQuestion();
+        };
+
+        function generateQuestion() {
+            // Hide AI feedback
+            document.getElementById('ai-feedback-container').classList.add('hidden');
+            
+            const visuals = document.getElementById('game-visuals');
+            const answers = document.getElementById('game-answer-area');
+            const choices = document.getElementById('game-choices-area');
+            
+            visuals.innerHTML = '';
+            answers.innerHTML = '';
+            choices.innerHTML = '';
+            visuals.classList.remove('animate-shake');
+
+            // Pick random item
+            const item = DBItems[Math.floor(Math.random() * DBItems.length)];
+
+            if (state.mode === 'literacy') {
+                setupLiteracyMode(item);
+            } else {
+                setupNumeracyMode(item);
+            }
+        }
+
+        // --- Literacy Logic (Membaca/Menulis) ---
+        function setupLiteracyMode(item) {
+            state.targetWord = item.name;
+            state.currentAnswer = new Array(item.name.length).fill('');
+            
+            const visuals = document.getElementById('game-visuals');
+            visuals.innerHTML = `<div class="animate-float drop-shadow-2xl">${item.emoji}</div>`;
+            
+            renderSlots();
+
+            // Generate letter bank
+            let letters = item.name.split('');
+            if (state.difficulty === 'hard') {
+                // Add 3 random decoy letters
+                const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                for (let i = 0; i < 3; i++) {
+                    letters.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
+                }
+            }
+            // Shuffle
+            letters = letters.sort(() => Math.random() - 0.5);
+
+            const choices = document.getElementById('game-choices-area');
+            letters.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = "w-16 h-16 md:w-20 md:h-20 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 text-3xl md:text-4xl font-black rounded-2xl kid-shadow flex items-center justify-center transition-transform transform active:scale-90 border-4 border-yellow-500";
+                btn.innerText = letter;
+                btn.onclick = () => handleLetterClick(letter, btn);
+                choices.appendChild(btn);
+            });
+        }
+
+        function renderSlots() {
+            const answers = document.getElementById('game-answer-area');
+            answers.innerHTML = state.currentAnswer.map((char, index) => 
+                `<div class="w-16 h-16 md:w-20 md:h-20 bg-white/20 border-4 ${char ? 'border-yellow-400 bg-white/40' : 'border-dashed border-white/50'} rounded-2xl flex items-center justify-center text-4xl font-black text-white cursor-pointer transition-colors" onclick="removeLetter(${index})">
+                    ${char}
+                </div>`
+            ).join('');
+        }
+
+        window.handleLetterClick = (letter, btnElement) => {
+            playSound('click');
+            const emptyIndex = state.currentAnswer.indexOf('');
+            if (emptyIndex !== -1) {
+                state.currentAnswer[emptyIndex] = letter;
+                btnElement.classList.add('hidden'); // Hide from bank
+                // Tag the letter with its source button so we can restore it if removed
+                state.currentAnswer[`src_${emptyIndex}`] = btnElement;
+                renderSlots();
+                checkLiteracyWin();
+            }
+        };
+
+        window.removeLetter = (index) => {
+            if (state.currentAnswer[index] !== '') {
+                playSound('click');
+                const btnElement = state.currentAnswer[`src_${index}`];
+                if (btnElement) btnElement.classList.remove('hidden');
+                state.currentAnswer[index] = '';
+                delete state.currentAnswer[`src_${index}`];
+                renderSlots();
+            }
+        };
+
+        function checkLiteracyWin() {
+            if (!state.currentAnswer.includes('')) {
+                const currentStr = state.currentAnswer.join('');
+                if (currentStr === state.targetWord) {
+                    handleWin("mengeja " + state.targetWord);
+                } else {
+                    handleWrong("mengeja " + state.targetWord);
+                }
+            }
+        }
+
+        // --- Numeracy Logic (Berhitung) ---
+        function setupNumeracyMode(item) {
+            const countArray = DBNumeracy[state.difficulty];
+            state.targetNumber = countArray[Math.floor(Math.random() * countArray.length)];
+            
+            const visuals = document.getElementById('game-visuals');
+            let emojisHTML = '';
+            for(let i=0; i < state.targetNumber; i++){
+                emojisHTML += `<div class="animate-float drop-shadow-xl m-1" style="animation-delay: ${i*0.1}s">${item.emoji}</div>`;
+            }
+            visuals.innerHTML = emojisHTML;
+            visuals.className = "flex flex-wrap justify-center items-center gap-2 mb-4 md:mb-8 text-6xl md:text-7xl max-w-lg";
+
+            const answers = document.getElementById('game-answer-area');
+            answers.innerHTML = `<h3 class="text-3xl md:text-4xl font-black text-white drop-shadow-md text-center w-full">Ada berapa ya? 🤔</h3>`;
+
+            // Generate Number Options
+            let options = [state.targetNumber];
+            while (options.length < 3) {
+                const rand = Math.floor(Math.random() * 10) + 1;
+                if (!options.includes(rand)) options.push(rand);
+            }
+            options = options.sort(() => Math.random() - 0.5);
+
+            const choices = document.getElementById('game-choices-area');
+            options.forEach(num => {
+                const btn = document.createElement('button');
+                btn.className = "w-24 h-24 md:w-32 md:h-32 bg-blue-500 hover:bg-blue-400 text-white text-5xl md:text-6xl font-black rounded-3xl kid-shadow flex items-center justify-center transition-transform transform active:scale-90 border-4 border-blue-600";
+                btn.innerText = num;
+                btn.onclick = () => {
+                    playSound('click');
+                    if (num === state.targetNumber) {
+                        handleWin("berhitung " + state.targetNumber + " benda");
+                    } else {
+                        handleWrong("berhitung");
+                    }
+                };
+                choices.appendChild(btn);
+            });
+        }
+
+        // --- Win/Loss Handling & AI ---
+        async function handleWin(topic) {
+            playSound('correct');
+            // Update Score
+            const player = state.players[state.currentPlayerIndex];
+            player.score += (state.difficulty === 'easy' ? 10 : 20);
+            document.getElementById('game-player-score').innerText = player.score;
+            
+            // Visual feedback
+            const container = document.getElementById('app-container');
+            container.classList.add('scale-105', 'transition-transform', 'duration-300');
+            setTimeout(() => container.classList.remove('scale-105'), 300);
+
+            // Save to Firebase (Async)
+            if (window.saveScoreToCloud) window.saveScoreToCloud(player);
+
+            // Fetch AI Praise, bacakan dengan suara, lalu buka overlay Menulis (Tracing)
+            await showAIFeedback(true, topic, () => {
+                document.getElementById('ai-feedback-container').classList.add('hidden');
+                if (state.mode === 'literacy') {
+                    startTracing(state.targetWord.split(''));
+                } else {
+                    startTracing([state.targetNumber.toString()]);
+                }
+            });
+        }
+
+        async function handleWrong(topic) {
+            playSound('wrong');
+            const visuals = document.getElementById('game-visuals');
+            visuals.classList.remove('animate-shake');
+            void visuals.offsetWidth; // trigger reflow
+            visuals.classList.add('animate-shake');
+            
+            // Clear inputs for literacy if wrong
+            if (state.mode === 'literacy') {
+                state.currentAnswer = new Array(state.targetWord.length).fill('');
+                // Unhide all letter bank buttons
+                const choices = document.getElementById('game-choices-area').children;
+                for(let btn of choices) { btn.classList.remove('hidden'); }
+                renderSlots();
+            }
+
+            // Fetch AI Encouragement dan bacakan dengan suara (tanpa callback lanjut)
+            await showAIFeedback(false, topic);
+        }
+
+        async function showAIFeedback(isCorrect, topic, onCompleteCallback) {
+            const feedbackContainer = document.getElementById('ai-feedback-container');
+            const feedbackText = document.getElementById('ai-feedback-text');
+            const robotEmoji = document.getElementById('ai-robot-emoji');
+            
+            // Show loading state
+            feedbackContainer.classList.remove('hidden');
+            robotEmoji.innerText = "🤖";
+            feedbackText.innerText = "Bentar ya, robot mikir dulu... 💭";
+            
+            let finalMessage = "";
+
+            try {
+                const promptText = isCorrect ? 
+                    `Berikan 1 kalimat pendek penuh semangat, pujian, ceria, dalam bahasa Indonesia untuk anak PAUD karena berhasil ${topic}. Maksimal 8 kata. Gunakan gaya bahasa lucu.` :
+                    `Berikan 1 kalimat pendek penyemangat lembut dalam bahasa Indonesia untuk anak PAUD yang salah menjawab soal ${topic}. Jangan beri tahu jawabannya. Maksimal 8 kata. Gaya bahasa lucu.`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: { maxOutputTokens: 50, temperature: 0.7 }
+                };
+
+                const apiKey = ""; // AQ.Ab8RN6I9yXcYK06n5x8EJpuBPQunFmp4gzs4jndKg4PqVjVcnA
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (aiText) {
+                    finalMessage = aiText.replace(/\"/g, '').trim();
+                } else {
+                    finalMessage = isCorrect ? "Hebat sekali kamu! Pintar!" : "Ayo coba lagi, kamu pasti bisa!";
+                }
+            } catch (error) {
+                // Fallback jika gagal
+                finalMessage = isCorrect ? "Wah kamu keren banget!" : "Tidak apa-apa, ayo semangat mencoba lagi!";
+            }
+
+            feedbackText.innerText = finalMessage;
+            robotEmoji.innerText = isCorrect ? "🌟" : "💪";
+
+            // Siapkan teks pengantar suara Narator
+            let introText = "";
+            if (isCorrect) {
+                 if (state.mode === 'literacy') {
+                     introText = `Benar sekali! Ini adalah ${state.targetWord}. `;
+                 } else {
+                     introText = `Benar! Jumlahnya ada ${state.targetNumber}. `;
+                 }
+            } else {
+                 introText = "Oh oh, hampir benar. ";
+            }
+
+            // Panggil fungsi pembaca suara (TTS)
+            speakFriendly(introText + finalMessage, onCompleteCallback);
+        }
+
+        window.endTurn = () => {
+            playSound('click');
+            // Move to next player
+            state.currentPlayerIndex++;
+            if (state.currentPlayerIndex >= state.players.length) {
+                state.currentPlayerIndex = 0; // wrap around
+            }
+            goToMenu();
+        };
+
+        window.showScoreboard = () => {
+            playSound('win');
+            switchScreen('screen-scoreboard');
+            const list = document.getElementById('scoreboard-list');
+            
+            // Sort players by score descending
+            const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
+            
+            list.innerHTML = sortedPlayers.map((p, idx) => {
+                let rankIcon = "⭐";
+                if (idx === 0) rankIcon = "🥇";
+                if (idx === 1) rankIcon = "🥈";
+                if (idx === 2) rankIcon = "🥉";
+                return `<li class="flex justify-between items-center bg-gray-100 px-6 py-4 rounded-2xl border-2 border-gray-200">
+                    <span>${rankIcon} ${p.name} <span class="text-sm text-gray-500">(${p.kelas})</span></span>
+                    <span class="text-blue-600 font-black">${p.score} Poin</span>
+                </li>`;
+            }).join('');
+        };
+
+        // ==========================================
+        // TEXT-TO-SPEECH (TTS) NARRATOR SYSTEM
+        // ==========================================
+        function speakFriendly(text, onEndCallback) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Hentikan suara sebelumnya
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID'; // Bahasa Indonesia
+                utterance.pitch = 1.4; // Pitch tinggi agar terdengar ramah/seperti anak kecil
+                utterance.rate = 0.9;  // Tempo sedikit diperlambat agar jelas
+                
+                let callbackFired = false;
+                
+                utterance.onend = () => {
+                    if(!callbackFired) { callbackFired = true; if(onEndCallback) onEndCallback(); }
+                };
+                utterance.onerror = () => {
+                    if(!callbackFired) { callbackFired = true; if(onEndCallback) onEndCallback(); }
+                };
+                
+                window.speechSynthesis.speak(utterance);
+                
+                // Fallback jika API TTS nyangkut/browser tidak memutar suara
+                setTimeout(() => {
+                    if(!callbackFired) { callbackFired = true; if(onEndCallback) onEndCallback(); }
+                }, Math.max(text.length * 120, 3000));
+
+            } else {
+                // Jika browser tidak mendukung TTS, langsung jalankan callback setelah jeda 3 detik
+                setTimeout(() => {
+                    if(onEndCallback) onEndCallback();
+                }, 3000);
+            }
+        }
+
+        // ==========================================
+        // MENULIS (TRACING) CANVAS SYSTEM
+        // ==========================================
+        let tracingQueue = [];
+        let currentTraceIndex = 0;
+        
+        const canvas = document.getElementById('tracing-canvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        window.startTracing = (charsArray) => {
+            tracingQueue = charsArray;
+            currentTraceIndex = 0;
+            document.getElementById('overlay-tracing').classList.remove('hidden');
+            renderCurrentTrace();
+        };
+
+        function renderCurrentTrace() {
+            // Sesuaikan instruksi
+            const isLiteracy = state.mode === 'literacy';
+            document.getElementById('tracing-title').innerText = isLiteracy 
+                ? `Ayo tulis huruf "${tracingQueue[currentTraceIndex]}"! ✍️`
+                : `Ayo tulis angka "${tracingQueue[currentTraceIndex]}"! ✍️`;
+            
+            // Set huruf besar/angka di background kanvas
+            document.getElementById('tracing-target').innerText = tracingQueue[currentTraceIndex];
+            
+            setupCanvasSize();
+            clearTracing();
+            
+            // Narator menyebutkan apa yang harus ditulis
+            speakFriendly(isLiteracy 
+                ? `Tulis huruf ${tracingQueue[currentTraceIndex]}.` 
+                : `Tulis angka ${tracingQueue[currentTraceIndex]}.`);
+        }
+
+        function setupCanvasSize() {
+            if(!canvas || !ctx) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            // Menyesuaikan ukuran resolusi internal kanvas dengan ukuran tampilan layar
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.lineWidth = 18;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#3b82f6'; // Warna spidol biru
+        }
+
+        window.clearTracing = () => {
+            playSound('click');
+            if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
+
+        window.nextTracing = () => {
+            playSound('click');
+            currentTraceIndex++;
+            if (currentTraceIndex < tracingQueue.length) {
+                renderCurrentTrace(); // Lanjut ke huruf berikutnya
+            } else {
+                // Semua huruf/angka selesai ditiru
+                document.getElementById('overlay-tracing').classList.add('hidden');
+                speakFriendly("Kerja yang bagus! Giliran berikutnya.");
+                endTurn();
+            }
+        };
+
+        // --- Logika Menggambar ---
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+            
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const pos = getCanvasPos(e);
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        function draw(e) {
+            if (!isDrawing || !ctx) return;
+            e.preventDefault(); // Mencegah layar tergulung (scroll) saat menggambar di HP/Tablet
+            const pos = getCanvasPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+        }
+
+        // --- Listener Kanvas (Mouse & Touch) ---
+        if (canvas) {
+            // Mouse
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseout', stopDraw);
+            
+            // Touch / Layar Sentuh / Papan Interaktif
+            canvas.addEventListener('touchstart', startDraw, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDraw);
+            canvas.addEventListener('touchcancel', stopDraw);
+        }
+    </script>
+</body>
+</html>
